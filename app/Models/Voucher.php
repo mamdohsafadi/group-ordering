@@ -8,15 +8,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * A discount/promo code applied to an order.
  *
- * @property int      $id
- * @property string   $voucher
+ * @property int $id
+ * @property string $voucher
  * @property int|null $category
- * @property int      $type
- * @property int      $apply_on
- * @property float    $value
+ * @property int $type
+ * @property int $apply_on
+ * @property float $value
  * @property int|null $bill_id
  * @property int|null $dish_id
- * @property float    $total
+ * @property float $total
  */
 class Voucher extends Model
 {

@@ -10,13 +10,13 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * A single line item on a bill. Each participant sub-cart line becomes one
  * order row when the group order is submitted.
  *
- * @property int         $id
- * @property int         $bill_id
- * @property int         $dish_id
- * @property int         $quantity
- * @property float|null  $dish_price
- * @property float|null  $total
- * @property float       $discount
+ * @property int $id
+ * @property int $bill_id
+ * @property int $dish_id
+ * @property int $quantity
+ * @property float|null $dish_price
+ * @property float|null $total
+ * @property float $discount
  * @property string|null $special_instructions
  */
 class Order extends Model

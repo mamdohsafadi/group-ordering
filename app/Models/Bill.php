@@ -11,20 +11,20 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * The real order/checkout record sent to the restaurant. A group order
  * produces exactly one bill at checkout, charged to the leader.
  *
- * @property int        $id
- * @property int        $user_id
- * @property int        $restaurant_id
- * @property int|null   $address_id
- * @property int        $bill_type
- * @property string     $time_type
- * @property int        $stage
- * @property int|null   $state
+ * @property int $id
+ * @property int $user_id
+ * @property int $restaurant_id
+ * @property int|null $address_id
+ * @property int $bill_type
+ * @property string $time_type
+ * @property int $stage
+ * @property int|null $state
  * @property float|null $sub_total
- * @property float      $discount
- * @property float      $delivery
+ * @property float $discount
+ * @property float $delivery
  * @property float|null $tax
  * @property float|null $net_total
- * @property int|null   $voucher_id
+ * @property int|null $voucher_id
  */
 class Bill extends Model
 {

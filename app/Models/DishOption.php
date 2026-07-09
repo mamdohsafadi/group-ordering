@@ -9,15 +9,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * Catalog: a single modifier/option a dish can carry.
  *
- * @property int    $id
- * @property int    $dish_group_id
+ * @property int $id
+ * @property int $dish_group_id
  * @property string $en_name
  * @property string $ar_name
- * @property float  $price
- * @property float  $purchase_price
- * @property bool   $is_default
- * @property bool   $is_active
- * @property bool   $is_deleted
+ * @property float $price
+ * @property float $purchase_price
+ * @property bool $is_default
+ * @property bool $is_active
+ * @property bool $is_deleted
  */
 class DishOption extends Model
 {

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * Lookup: bill type (e.g. PICKUP / DELIVERY).
  *
- * @property int         $id
+ * @property int $id
  * @property string|null $name
  * @property string|null $arabic_name
  */
