@@ -35,9 +35,16 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+
         return [
             ...parent::share($request),
-            //
+            'auth' => [
+                'user' => $user?->only('id', 'name', 'email'),
+                // Demo bearer token for calling /api/v1 from the frontend
+                // (LocalTokenValidator resolves it; swapped for real JWTs later).
+                'apiToken' => $user?->id !== null ? (string) $user->id : null,
+            ],
         ];
     }
 }
