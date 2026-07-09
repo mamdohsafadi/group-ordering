@@ -1,10 +1,6 @@
 <script setup>
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import DemoLayout from '../Layouts/DemoLayout.vue';
-
-defineProps({
-    apiVersion: { type: String, default: 'v1' },
-});
 </script>
 
 <template>
@@ -25,14 +21,14 @@ defineProps({
                 sub-cart — one unified order, individual invoices, zero back-and-forth.
             </p>
             <div class="mt-4 flex gap-4">
-                <a
-                    href="#"
+                <Link
+                    href="/restaurants/1"
                     class="rounded-xl bg-amber-500 px-6 py-3 font-medium text-white shadow-lg shadow-amber-500/25 transition hover:bg-amber-600"
                 >
                     Start a Group Order
-                </a>
+                </Link>
                 <a
-                    :href="`/api/${apiVersion}/ping`"
+                    href="/api/v1/ping"
                     class="rounded-xl border border-stone-200 px-6 py-3 font-medium text-stone-600 transition hover:border-stone-300 hover:bg-stone-50"
                 >
                     API status

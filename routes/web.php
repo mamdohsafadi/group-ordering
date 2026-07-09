@@ -15,4 +15,13 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+    // Demo screens; data comes from the API client layer (mock for now).
+    Route::get('/restaurants/{restaurant}', fn (int $restaurant) => Inertia::render('Restaurants/Show', [
+        'restaurantId' => $restaurant,
+    ]))->whereNumber('restaurant')->name('restaurants.show');
+
+    Route::get('/group-orders/{groupOrder}/lobby', fn (int $groupOrder) => Inertia::render('GroupOrders/Lobby', [
+        'groupOrderId' => $groupOrder,
+    ]))->whereNumber('groupOrder')->name('group-orders.lobby');
 });
