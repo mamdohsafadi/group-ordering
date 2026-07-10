@@ -24,4 +24,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/group-orders/{groupOrder}/lobby', fn (int $groupOrder) => Inertia::render('GroupOrders/Lobby', [
         'groupOrderId' => $groupOrder,
     ]))->whereNumber('groupOrder')->name('group-orders.lobby');
+
+    // US-002 AC2: guests hitting a join link are sent to login and returned
+    // here afterwards (redirect()->intended in AuthController).
+    Route::get('/join/{token}', fn (string $token) => Inertia::render('GroupOrders/Join', [
+        'token' => $token,
+    ]))->where('token', '[a-f0-9]{32}')->name('group-orders.join');
 });
