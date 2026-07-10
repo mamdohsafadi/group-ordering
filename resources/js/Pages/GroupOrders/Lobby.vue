@@ -1,0 +1,156 @@
+<script setup>
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import DemoLayout from '../../Layouts/DemoLayout.vue';
+import CountdownTimer from '../../Components/CountdownTimer.vue';
+import CopyLinkField from '../../Components/CopyLinkField.vue';
+import ParticipantList from '../../Components/ParticipantList.vue';
+import { onStoreChange, useApi } from '../../api';
+import { findRestaurant } from '../../api/fixtures';
+
+const props = defineProps({
+    groupOrderId: { type: Number, required: true },
+});
+
+const api = useApi();
+const page = usePage();
+
+const groupOrder = ref(null);
+const error = ref(null);
+const cancelling = ref(false);
+
+const restaurant = computed(() => (groupOrder.value ? findRestaurant(groupOrder.value.restaurant_id) : null));
+const isLeader = computed(() => groupOrder.value?.leader_id === page.props.auth.user?.id);
+const joinedCount = computed(
+    () => groupOrder.value?.participants.filter((p) => p.status === 'JOINED').length ?? 0,
+);
+const joinUrl = computed(() =>
+    groupOrder.value ? `${window.location.origin}/join/${groupOrder.value.shareable_link}` : '',
+);
+const isActive = computed(() => groupOrder.value?.status === 'ACTIVE');
+
+let unsubscribe = null;
+
+async function refresh() {
+    try {
+        groupOrder.value = await api.getGroupOrder(props.groupOrderId);
+    } catch (e) {
+        error.value = e.message;
+    }
+}
+
+onMounted(async () => {
+    await refresh();
+    // US-002 AC5 / spec 10.1: participant list updates live. The mock store
+    // emits cross-tab storage events; the real API will use broadcasting.
+    unsubscribe = onStoreChange(refresh);
+});
+
+onBeforeUnmount(() => unsubscribe?.());
+
+async function cancelGroup() {
+    if (!window.confirm('Cancel this group order for everyone?')) {
+        return;
+    }
+
+    cancelling.value = true;
+
+    try {
+        await api.cancelGroupOrder(props.groupOrderId);
+        await refresh();
+    } catch (e) {
+        error.value = e.message;
+    } finally {
+        cancelling.value = false;
+    }
+}
+</script>
+
+<template>
+    <Head title="Group Order Lobby" />
+    <DemoLayout>
+        <section v-if="error" class="mx-auto max-w-xl px-6 pt-24 text-center">
+            <h1 class="text-2xl font-semibold text-stone-900">{{ error }}</h1>
+            <Link href="/" class="mt-6 inline-block rounded-xl bg-amber-500 px-6 py-3 font-medium text-white">
+                Back to home
+            </Link>
+        </section>
+
+        <section v-else-if="groupOrder" class="mx-auto max-w-2xl px-6 pt-10 pb-24">
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <p class="text-sm font-medium text-amber-600">Group order · {{ restaurant?.name }}</p>
+                    <h1 class="mt-1 text-3xl font-semibold tracking-tight text-stone-900">
+                        {{ isLeader ? 'Your group lobby' : `${groupOrder.leader_name}'s group` }}
+                    </h1>
+                </div>
+                <!-- US-001 AC4 / FR-004: countdown visible to everyone. -->
+                <CountdownTimer v-if="isActive" :expires-at="groupOrder.expires_at" @expired="refresh" />
+            </div>
+
+            <!-- Terminal states -->
+            <div
+                v-if="groupOrder.status === 'EXPIRED'"
+                class="mt-8 rounded-2xl border border-stone-200 bg-stone-50 p-6 text-center"
+            >
+                <h2 class="text-lg font-semibold text-stone-700">This group order has expired</h2>
+                <p class="mt-1 text-stone-500">
+                    Nobody joined within the 5-minute window, so the group was cancelled automatically.
+                </p>
+                <Link
+                    :href="`/restaurants/${groupOrder.restaurant_id}`"
+                    class="mt-4 inline-block rounded-xl bg-amber-500 px-5 py-2.5 font-medium text-white"
+                >
+                    Start a new one
+                </Link>
+            </div>
+
+            <div
+                v-else-if="groupOrder.status === 'CANCELLED'"
+                class="mt-8 rounded-2xl border border-stone-200 bg-stone-50 p-6 text-center"
+            >
+                <h2 class="text-lg font-semibold text-stone-700">This group order was cancelled</h2>
+                <p class="mt-1 text-stone-500">The group leader cancelled the order before submission.</p>
+            </div>
+
+            <template v-else>
+                <!-- US-001 AC2/AC3: shareable link with copy and share options (leader only). -->
+                <div v-if="isLeader" class="mt-8 rounded-2xl border border-stone-100 bg-white p-6 shadow-sm">
+                    <h2 class="font-semibold text-stone-900">Invite people</h2>
+                    <p class="mt-1 mb-4 text-sm text-stone-500">
+                        Anyone with this link can join while the timer is running.
+                    </p>
+                    <CopyLinkField :url="joinUrl" />
+                </div>
+
+                <div class="mt-6 rounded-2xl border border-stone-100 bg-white p-6 shadow-sm">
+                    <div class="mb-4 flex items-center justify-between">
+                        <h2 class="font-semibold text-stone-900">
+                            Participants
+                            <span class="ml-1 text-sm font-normal text-stone-400">{{ joinedCount }}</span>
+                        </h2>
+                        <span v-if="isActive" class="flex items-center gap-1.5 text-xs font-medium text-green-600">
+                            <span class="size-2 animate-pulse rounded-full bg-green-500" />
+                            Live
+                        </span>
+                    </div>
+                    <ParticipantList :participants="groupOrder.participants" />
+                    <p v-if="joinedCount === 1" class="mt-3 text-sm text-stone-400">
+                        Waiting for people to join…
+                    </p>
+                </div>
+
+                <div v-if="isLeader" class="mt-6 flex justify-end">
+                    <button
+                        type="button"
+                        :disabled="cancelling"
+                        class="rounded-xl border border-red-200 px-4 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-50"
+                        @click="cancelGroup"
+                    >
+                        Cancel group order
+                    </button>
+                </div>
+            </template>
+        </section>
+    </DemoLayout>
+</template>
