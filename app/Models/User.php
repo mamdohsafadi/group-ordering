@@ -10,9 +10,9 @@ use Illuminate\Notifications\Notifiable;
 /**
  * Account that can lead or join a group order.
  *
- * @property int         $id
+ * @property int $id
  * @property string|null $name
- * @property string      $email
+ * @property string $email
  * @property string|null $mobile
  */
 class User extends Authenticatable

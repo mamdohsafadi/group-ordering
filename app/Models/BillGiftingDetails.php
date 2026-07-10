@@ -8,8 +8,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * Optional gifting metadata for a bill.
  *
- * @property int         $id
- * @property int         $bill_id
+ * @property int $id
+ * @property int $bill_id
  * @property string|null $recipient_name
  * @property string|null $recipient_phone
  */

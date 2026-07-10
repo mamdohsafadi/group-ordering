@@ -9,12 +9,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * Catalog: a group of modifiers on a restaurant's menu (e.g. "Size").
  *
- * @property int    $id
- * @property int    $restaurant_id
+ * @property int $id
+ * @property int $restaurant_id
  * @property string $en_name
  * @property string $ar_name
- * @property bool   $is_active
- * @property bool   $is_deleted
+ * @property bool $is_active
+ * @property bool $is_deleted
  */
 class DishOptionGroup extends Model
 {

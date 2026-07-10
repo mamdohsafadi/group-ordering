@@ -9,15 +9,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * A per-participant cost breakdown, or the leader's consolidated master invoice
  * when $is_master is true (in which case participant_id is null).
  *
- * @property int        $id
- * @property int        $group_order_id
- * @property int|null   $participant_id
- * @property float      $subtotal
- * @property float      $delivery_fee_share
- * @property float      $tax_share
- * @property float      $discount_share
- * @property float      $total
- * @property bool       $is_master
+ * @property int $id
+ * @property int $group_order_id
+ * @property int|null $participant_id
+ * @property float $subtotal
+ * @property float $delivery_fee_share
+ * @property float $tax_share
+ * @property float $discount_share
+ * @property float $total
+ * @property bool $is_master
  */
 class GroupInvoice extends Model
 {

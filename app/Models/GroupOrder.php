@@ -6,34 +6,40 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Carbon;
 
 /**
  * A collaborative ordering session led by one user.
  *
- * @property int         $id
- * @property int         $leader_id
- * @property int         $restaurant_id
- * @property int|null    $delivery_address_id
- * @property int|null    $bill_id
- * @property string      $status
- * @property string      $shareable_link
+ * @property int $id
+ * @property int $leader_id
+ * @property int $restaurant_id
+ * @property int|null $delivery_address_id
+ * @property int|null $bill_id
+ * @property string $status
+ * @property string $shareable_link
  * @property string|null $promo_code
- * @property string      $delivery_time_type
- * @property \Illuminate\Support\Carbon|null $scheduled_time
- * @property \Illuminate\Support\Carbon|null $expires_at
- * @property \Illuminate\Support\Carbon|null $submitted_at
+ * @property string $delivery_time_type
+ * @property Carbon|null $scheduled_time
+ * @property Carbon|null $expires_at
+ * @property Carbon|null $submitted_at
  */
 class GroupOrder extends Model
 {
     // status values
     public const STATUS_CREATED = 'CREATED';
+
     public const STATUS_ACTIVE = 'ACTIVE';
+
     public const STATUS_SUBMITTED = 'SUBMITTED';
+
     public const STATUS_CANCELLED = 'CANCELLED';
+
     public const STATUS_EXPIRED = 'EXPIRED';
 
     // delivery_time_type values
     public const DELIVERY_ASAP = 'ASAP';
+
     public const DELIVERY_SCHEDULED = 'SCHEDULED';
 
     protected $fillable = [

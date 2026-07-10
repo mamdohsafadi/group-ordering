@@ -9,12 +9,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * Menu item that a participant can add to their sub-cart.
  *
- * @property int         $id
- * @property int         $restaurant_id
- * @property string      $name
+ * @property int $id
+ * @property int $restaurant_id
+ * @property string $name
  * @property string|null $eng_name
- * @property float|null  $price
- * @property int         $active
+ * @property float|null $price
+ * @property int $active
  */
 class Dish extends Model
 {

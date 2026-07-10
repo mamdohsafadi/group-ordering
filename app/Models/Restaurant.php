@@ -8,10 +8,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * Restaurant a group order is placed against.
  *
- * @property int         $id
- * @property string      $name
+ * @property int $id
+ * @property string $name
  * @property string|null $arabic_name
- * @property int         $active
+ * @property int $active
  */
 class Restaurant extends Model
 {

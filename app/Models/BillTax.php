@@ -8,8 +8,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * Per-bill tax breakdown.
  *
- * @property int   $id
- * @property int   $bill_id
+ * @property int $id
+ * @property int $bill_id
  * @property float $consumption_tax
  * @property float $local_fees_tax
  * @property float $re_building_tax

@@ -6,20 +6,22 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Carbon;
 
 /**
  * A user's membership within a single group order.
  *
- * @property int      $id
- * @property int      $group_order_id
- * @property int      $user_id
- * @property string   $status
- * @property \Illuminate\Support\Carbon|null $joined_at
- * @property \Illuminate\Support\Carbon|null $left_at
+ * @property int $id
+ * @property int $group_order_id
+ * @property int $user_id
+ * @property string $status
+ * @property Carbon|null $joined_at
+ * @property Carbon|null $left_at
  */
 class GroupParticipant extends Model
 {
     public const STATUS_JOINED = 'JOINED';
+
     public const STATUS_LEFT = 'LEFT';
 
     public $timestamps = false;

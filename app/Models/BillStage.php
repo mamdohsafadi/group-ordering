@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * Lookup: bill stage (e.g. PENDING / PAID / CANCELLED).
  *
- * @property int    $id
+ * @property int $id
  * @property string $name
  */
 class BillStage extends Model

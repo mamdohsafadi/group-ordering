@@ -8,17 +8,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * A single line item in a participant's sub-cart.
  *
- * @property int         $id
- * @property int         $group_order_id
- * @property int         $participant_id
- * @property int         $dish_id
- * @property int|null    $order_id
- * @property int         $quantity
- * @property array|null  $modifiers
+ * @property int $id
+ * @property int $group_order_id
+ * @property int $participant_id
+ * @property int $dish_id
+ * @property int|null $order_id
+ * @property int $quantity
+ * @property array|null $modifiers
  * @property string|null $special_instructions
- * @property float       $unit_price
- * @property float       $total_price
- * @property int         $version
+ * @property float $unit_price
+ * @property float $total_price
+ * @property int $version
  */
 class GroupCartItem extends Model
 {
