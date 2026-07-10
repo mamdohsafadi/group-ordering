@@ -19,6 +19,10 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleInertiaRequests::class,
         ]);
 
+        // NFR-005 hardening: meter the whole /api surface (limiter defined
+        // in AppServiceProvider; keyed by bearer token, falling back to IP).
+        $middleware->throttleApi();
+
         $middleware->alias([
             'auth.api-token' => AuthenticateApiToken::class,
         ]);
