@@ -2,17 +2,18 @@
 import { router } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import { useApi } from '../api';
-import { addresses } from '../api/fixtures';
 
 const props = defineProps({
     restaurantId: { type: Number, required: true },
+    // The logged-in user's saved addresses, passed down from the menu page.
+    addresses: { type: Array, default: () => [] },
 });
 
 const emit = defineEmits(['close']);
 
 const api = useApi();
 const form = ref({
-    delivery_address_id: addresses[0]?.id ?? null,
+    delivery_address_id: props.addresses[0]?.id ?? null,
     delivery_time_type: 'ASAP',
     scheduled_time: '',
 });
@@ -24,11 +25,19 @@ async function start() {
     error.value = null;
 
     try {
+        // datetime-local gives a timezone-naive wall-clock string; convert it
+        // to a real instant so the backend (UTC) validates and stores the
+        // moment the user actually picked.
+        const scheduledInstant =
+            form.value.delivery_time_type === 'SCHEDULED' && form.value.scheduled_time
+                ? new Date(form.value.scheduled_time).toISOString()
+                : null;
+
         const created = await api.createGroupOrder({
             restaurant_id: props.restaurantId,
             delivery_address_id: form.value.delivery_address_id,
             delivery_time_type: form.value.delivery_time_type,
-            scheduled_time: form.value.delivery_time_type === 'SCHEDULED' ? form.value.scheduled_time : null,
+            scheduled_time: scheduledInstant,
         });
 
         router.visit(`/group-orders/${created.group_order_id}/lobby`);

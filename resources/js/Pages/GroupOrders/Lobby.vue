@@ -5,8 +5,7 @@ import DemoLayout from '../../Layouts/DemoLayout.vue';
 import CountdownTimer from '../../Components/CountdownTimer.vue';
 import CopyLinkField from '../../Components/CopyLinkField.vue';
 import ParticipantList from '../../Components/ParticipantList.vue';
-import { onStoreChange, useApi } from '../../api';
-import { findRestaurant } from '../../api/fixtures';
+import { useApi } from '../../api';
 
 const props = defineProps({
     groupOrderId: { type: Number, required: true },
@@ -19,7 +18,6 @@ const groupOrder = ref(null);
 const error = ref(null);
 const cancelling = ref(false);
 
-const restaurant = computed(() => (groupOrder.value ? findRestaurant(groupOrder.value.restaurant_id) : null));
 const isLeader = computed(() => groupOrder.value?.leader_id === page.props.auth.user?.id);
 const joinedCount = computed(
     () => groupOrder.value?.participants.filter((p) => p.status === 'JOINED').length ?? 0,
@@ -29,24 +27,38 @@ const joinUrl = computed(() =>
 );
 const isActive = computed(() => groupOrder.value?.status === 'ACTIVE');
 
-let unsubscribe = null;
+// US-002 AC5 / spec 10.1: participant list updates live. Polling is the
+// stopgap until broadcasting (Reverb) lands — handoff §5.
+const POLL_MS = 4000;
+let pollTimer = null;
 
 async function refresh() {
     try {
         groupOrder.value = await api.getGroupOrder(props.groupOrderId);
+        error.value = null;
+
+        // Terminal states never change again — stop asking.
+        if (groupOrder.value.status !== 'ACTIVE') {
+            clearInterval(pollTimer);
+        }
     } catch (e) {
-        error.value = e.message;
+        // A dropped poll (server restart, wifi blip) must not kill an
+        // already-rendered lobby — keep the last good state and retry.
+        const transient = e.status === 0 || e.status >= 500;
+
+        if (!transient || !groupOrder.value) {
+            error.value = e.message;
+            clearInterval(pollTimer);
+        }
     }
 }
 
 onMounted(async () => {
     await refresh();
-    // US-002 AC5 / spec 10.1: participant list updates live. The mock store
-    // emits cross-tab storage events; the real API will use broadcasting.
-    unsubscribe = onStoreChange(refresh);
+    pollTimer = setInterval(refresh, POLL_MS);
 });
 
-onBeforeUnmount(() => unsubscribe?.());
+onBeforeUnmount(() => clearInterval(pollTimer));
 
 async function cancelGroup() {
     if (!window.confirm('Cancel this group order for everyone?')) {
@@ -59,6 +71,8 @@ async function cancelGroup() {
         await api.cancelGroupOrder(props.groupOrderId);
         await refresh();
     } catch (e) {
+        // Stop polling so the next successful refresh doesn't wipe the message.
+        clearInterval(pollTimer);
         error.value = e.message;
     } finally {
         cancelling.value = false;
@@ -79,7 +93,7 @@ async function cancelGroup() {
         <section v-else-if="groupOrder" class="mx-auto max-w-2xl px-6 pt-10 pb-24">
             <div class="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                    <p class="text-sm font-medium text-amber-600">Group order · {{ restaurant?.name }}</p>
+                    <p class="text-sm font-medium text-amber-600">Group order · {{ groupOrder.restaurant_name }}</p>
                     <h1 class="mt-1 text-3xl font-semibold tracking-tight text-stone-900">
                         {{ isLeader ? 'Your group lobby' : `${groupOrder.leader_name}'s group` }}
                     </h1>

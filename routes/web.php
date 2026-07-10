@@ -1,12 +1,11 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\RestaurantController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::get('/', function () {
-    return Inertia::render('Home');
-});
+Route::get('/', [RestaurantController::class, 'index'])->name('home');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'show'])->name('login');
@@ -16,10 +15,10 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-    // Demo screens; data comes from the API client layer (mock for now).
-    Route::get('/restaurants/{restaurant}', fn (int $restaurant) => Inertia::render('Restaurants/Show', [
-        'restaurantId' => $restaurant,
-    ]))->whereNumber('restaurant')->name('restaurants.show');
+    // Demo screens; menu/address data comes from the DB as props (handoff §3),
+    // group-order state from /api/v1.
+    Route::get('/restaurants/{restaurant}', [RestaurantController::class, 'show'])
+        ->whereNumber('restaurant')->name('restaurants.show');
 
     Route::get('/group-orders/{groupOrder}/lobby', fn (int $groupOrder) => Inertia::render('GroupOrders/Lobby', [
         'groupOrderId' => $groupOrder,

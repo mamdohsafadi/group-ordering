@@ -4,8 +4,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import DemoLayout from '../../Layouts/DemoLayout.vue';
 import CountdownTimer from '../../Components/CountdownTimer.vue';
 import ParticipantList from '../../Components/ParticipantList.vue';
-import { onStoreChange, useApi } from '../../api';
-import { findRestaurant } from '../../api/fixtures';
+import { useApi } from '../../api';
 
 const props = defineProps({
     token: { type: String, required: true },
@@ -17,35 +16,60 @@ const page = usePage();
 const groupOrder = ref(null);
 const loading = ref(true);
 const error = ref(null);
+// Join failures live in their own channel so a successful background
+// refresh cannot wipe the message the user must read (US-002 AC4).
+const joinError = ref(null);
+// Flipped by the countdown so the join CTA disappears at exactly 00:00,
+// even for groups the server keeps ACTIVE because people already joined.
+const windowClosed = ref(false);
 const joining = ref(false);
 
-const restaurant = computed(() => (groupOrder.value ? findRestaurant(groupOrder.value.restaurant_id) : null));
-const joinable = computed(() => groupOrder.value?.status === 'ACTIVE');
+const joinable = computed(() => groupOrder.value?.status === 'ACTIVE' && !windowClosed.value);
 const alreadyIn = computed(() =>
     groupOrder.value?.participants.some(
         (p) => p.user_id === page.props.auth.user?.id && p.status === 'JOINED',
     ),
 );
 
-let unsubscribe = null;
+// US-002 AC5: the participant list and countdown stay live pre-join.
+// Polling is the stopgap until broadcasting (Reverb) lands — handoff §5.
+const POLL_MS = 4000;
+let pollTimer = null;
 
 async function refresh() {
     try {
         groupOrder.value = await api.getGroupOrderByToken(props.token);
         error.value = null;
+
+        // Terminal states never change again — stop asking.
+        if (groupOrder.value.status !== 'ACTIVE') {
+            clearInterval(pollTimer);
+        }
     } catch (e) {
-        error.value = e.message;
+        // A dropped poll (server restart, wifi blip) must not kill an
+        // already-rendered page — keep the last good state and retry.
+        const transient = e.status === 0 || e.status >= 500;
+
+        if (!transient || !groupOrder.value) {
+            error.value = e.message;
+            clearInterval(pollTimer);
+        }
     } finally {
         loading.value = false;
     }
 }
 
+function onCountdownExpired() {
+    windowClosed.value = true;
+    refresh();
+}
+
 onMounted(async () => {
     await refresh();
-    unsubscribe = onStoreChange(refresh);
+    pollTimer = setInterval(refresh, POLL_MS);
 });
 
-onBeforeUnmount(() => unsubscribe?.());
+onBeforeUnmount(() => clearInterval(pollTimer));
 
 async function join() {
     joining.value = true;
@@ -55,7 +79,7 @@ async function join() {
         const joined = await api.joinGroupOrder({ link_token: props.token });
         router.visit(`/group-orders/${joined.group_order_id}/lobby`);
     } catch (e) {
-        error.value = e.message;
+        joinError.value = e.message;
         joining.value = false;
         await refresh();
     }
@@ -70,7 +94,7 @@ async function join() {
 
             <!-- US-002 AC4 / spec 10.3: expired, submitted, or invalid link. -->
             <div
-                v-else-if="error || !joinable"
+                v-else-if="joinError || error || !joinable"
                 class="rounded-2xl border border-stone-200 bg-stone-50 p-8 text-center"
             >
                 <span
@@ -85,7 +109,7 @@ async function join() {
                     </svg>
                 </span>
                 <h1 class="mt-4 text-xl font-semibold text-stone-800">
-                    {{ error ?? 'This group order has expired or already been submitted.' }}
+                    {{ joinError ?? error ?? 'This group order has expired or already been submitted.' }}
                 </h1>
                 <Link
                     href="/"
@@ -102,14 +126,14 @@ async function join() {
                         {{ groupOrder.leader_name }} started a group order
                     </h1>
                     <p class="mt-2 text-stone-500">
-                        from <span class="font-medium text-stone-700">{{ restaurant?.name }}</span> — add your own
+                        from <span class="font-medium text-stone-700">{{ groupOrder.restaurant_name }}</span> — add your own
                         items, pay nothing: the leader covers the bill.
                     </p>
                 </div>
 
                 <!-- US-002 AC5: countdown and current participants are visible before joining. -->
                 <div class="mt-8 flex justify-center">
-                    <CountdownTimer :expires-at="groupOrder.expires_at" @expired="refresh" />
+                    <CountdownTimer :expires-at="groupOrder.expires_at" @expired="onCountdownExpired" />
                 </div>
 
                 <div class="mt-8 rounded-2xl border border-stone-100 bg-white p-6 shadow-sm">

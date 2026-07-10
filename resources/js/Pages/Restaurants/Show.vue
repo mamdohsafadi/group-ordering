@@ -1,16 +1,19 @@
 <script setup>
 import { Head } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 import DemoLayout from '../../Layouts/DemoLayout.vue';
 import StartGroupOrderModal from '../../Components/StartGroupOrderModal.vue';
-import { dishesFor, findRestaurant } from '../../api/fixtures';
 
+// Menu and address data comes from the DB via Inertia props (handoff §3);
+// group-order state stays on the /api/v1 client.
 const props = defineProps({
-    restaurantId: { type: Number, required: true },
+    restaurant: { type: Object, required: true },
+    dishes: { type: Array, required: true },
+    addresses: { type: Array, default: () => [] },
 });
 
-const restaurant = computed(() => findRestaurant(props.restaurantId));
-const menu = computed(() => dishesFor(props.restaurantId));
+const restaurant = props.restaurant;
+const menu = props.dishes;
 const startingGroup = ref(false);
 
 function formatPrice(price) {
@@ -62,6 +65,7 @@ function formatPrice(price) {
         <StartGroupOrderModal
             v-if="startingGroup && restaurant"
             :restaurant-id="restaurant.id"
+            :addresses="addresses"
             @close="startingGroup = false"
         />
     </DemoLayout>
