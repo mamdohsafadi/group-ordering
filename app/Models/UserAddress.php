@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -12,11 +13,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $user_id
  * @property string|null $name
  * @property string|null $street
+ * @property string|null $details
  * @property float|null $latitude
  * @property float|null $longitude
  */
 class UserAddress extends Model
 {
+    use HasFactory;
+
     protected $table = 'user_address';
 
     public $timestamps = false;
@@ -25,6 +29,7 @@ class UserAddress extends Model
         'user_id',
         'name',
         'street',
+        'details',
         'latitude',
         'longitude',
     ];
