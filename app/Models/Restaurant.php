@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -11,10 +12,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $id
  * @property string $name
  * @property string|null $arabic_name
+ * @property string|null $tagline
  * @property int $active
  */
 class Restaurant extends Model
 {
+    use HasFactory;
+
     protected $table = 'restaurant';
 
     public $timestamps = false;
@@ -22,6 +26,7 @@ class Restaurant extends Model
     protected $fillable = [
         'name',
         'arabic_name',
+        'tagline',
         'active',
     ];
 
