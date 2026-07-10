@@ -2,18 +2,22 @@
 
 namespace Tests\Feature;
 
-// use Illuminate\Foundation\Testing\RefreshDatabase;
+use App\Models\Restaurant;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class ExampleTest extends TestCase
 {
-    /**
-     * A basic test example.
-     */
-    public function test_the_application_returns_a_successful_response(): void
-    {
-        $response = $this->get('/');
+    use RefreshDatabase;
 
-        $response->assertStatus(200);
+    public function test_the_home_page_lists_active_restaurants(): void
+    {
+        Restaurant::factory()->create(['name' => 'Shawarma House']);
+        Restaurant::factory()->inactive()->create(['name' => 'Closed Doors']);
+
+        $this->get('/')
+            ->assertStatus(200)
+            ->assertSee('Shawarma House')
+            ->assertDontSee('Closed Doors');
     }
 }
