@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\GroupOrderController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -20,8 +21,21 @@ Route::prefix('v1')->group(function () {
     ]));
 
     // Group order lifecycle (spec §8.1–8.9) — added feature by feature:
-    // POST   /group-orders
-    // POST   /group-orders/{groupOrder}/join
+    Route::middleware('auth.api-token')->group(function () {
+        Route::post('/group-orders', [GroupOrderController::class, 'store']);
+        // No token-format constraint here: a clipped or malformed token must
+        // still reach the controller so the contract 404 message is returned
+        // (handoff §2.3) instead of Laravel's route-not-found error.
+        Route::get('/group-orders/by-token/{token}', [GroupOrderController::class, 'showByToken']);
+        Route::get('/group-orders/{groupOrder}', [GroupOrderController::class, 'show'])
+            ->whereNumber('groupOrder');
+        Route::post('/group-orders/{groupOrder}/join', [GroupOrderController::class, 'join'])
+            ->whereNumber('groupOrder');
+        Route::post('/group-orders/{groupOrder}/cancel', [GroupOrderController::class, 'cancel'])
+            ->whereNumber('groupOrder');
+    });
+
+    // Still to come, story by story:
     // POST   /group-orders/{groupOrder}/cart/items
     // PUT    /group-orders/{groupOrder}/cart/items/{item}
     // DELETE /group-orders/{groupOrder}/cart/items/{item}
