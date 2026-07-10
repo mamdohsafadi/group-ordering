@@ -17,10 +17,50 @@ at adoption (the live client is a Flutter app).
 - Inertia.js + Vue 3 + Tailwind CSS v4, built with Vite via bun
 - PHPUnit 12 (in-memory SQLite — keep migrations SQLite-compatible)
 
-## Setup
+## Requirements
+
+- PHP ≥ 8.3 with Composer (`pdo_mysql`, `mbstring`, `openssl` extensions)
+- [bun](https://bun.sh) — or Node 20+ with npm (Vite 8 needs a modern runtime)
+- MySQL running locally (XAMPP works); the default `.env` expects a
+  `group_ordering` database on `127.0.0.1` as `root` with no password
+
+## Quick start
 
 ```bash
+# once: create the database
+mysql -u root -e "CREATE DATABASE group_ordering"
+
 composer setup-bun        # install, .env, key, migrate, build (or `composer setup` for npm)
+php artisan db:seed       # demo catalogue: 10 restaurants, menus, users, addresses
+php artisan serve         # http://127.0.0.1:8000
+```
+
+Sign in with any demo account — the login screen offers one-click sign-in
+(password is `password` for all of them):
+
+| Account | Email |
+|---|---|
+| Hasan Katteeb | `hasan@demo.beeorder.com` |
+| Lina Haddad | `lina@demo.beeorder.com` |
+| Omar Nassar | `omar@demo.beeorder.com` |
+| Maya Aswad | `maya@demo.beeorder.com` |
+
+**Try the group flow with two users:** pick a restaurant and start a group order in
+one window, copy the invite link, open it in a private/incognito window signed in as
+another account, join — the first window's lobby updates live within a few seconds.
+
+Optional:
+
+- `php artisan schedule:work` — runs the expiry sweep (FR-005) in the background so
+  leader notifications fire without waiting for a request; expiry is also derived
+  lazily on every read, so the demo works without it.
+- **No MySQL?** Set `DB_CONNECTION=sqlite` in `.env` (drop the other `DB_*` lines),
+  create an empty `database/database.sqlite`, then migrate and seed — everything is
+  SQLite-compatible.
+
+## Development
+
+```bash
 composer dev              # serve + queue + logs + vite, concurrently
 composer test             # run the test suite
 vendor/bin/pint           # code style
