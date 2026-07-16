@@ -19,6 +19,7 @@ const api = useApi();
 const groupOrder = ref(null);
 const error = ref(null);
 const customizing = ref(null); // the dish currently in the modal
+const editingItem = ref(null); // the cart line being edited (US-005), null = adding
 
 const isActive = computed(() => groupOrder.value?.status === 'ACTIVE');
 const cart = computed(() => groupOrder.value?.my_cart ?? null);
@@ -53,8 +54,40 @@ onMounted(async () => {
 
 onBeforeUnmount(() => clearInterval(pollTimer));
 
-async function onAdded() {
+async function onSaved() {
+    closeModal();
+    await refresh();
+}
+
+function closeModal() {
     customizing.value = null;
+    editingItem.value = null;
+}
+
+// US-005 AC1: reopen the customizer prefilled with the line being edited.
+function editItem(item) {
+    const dish = props.dishes.find((d) => d.id === item.dish_id);
+
+    if (!dish) {
+        return;
+    }
+
+    editingItem.value = item;
+    customizing.value = dish;
+}
+
+// US-005 AC3: confirmed removal, then the subtotal refreshes.
+async function removeItem(item) {
+    if (!window.confirm(`Remove ${item.dish_name} from your cart?`)) {
+        return;
+    }
+
+    try {
+        await api.removeCartItem(props.groupOrderId, item.id);
+    } catch (e) {
+        window.alert(e.message);
+    }
+
     await refresh();
 }
 
@@ -128,7 +161,13 @@ function formatPrice(price) {
                     </li>
                 </ul>
 
-                <SubCartPanel :cart="cart" class="lg:sticky lg:top-6 lg:self-start" />
+                <SubCartPanel
+                    :cart="cart"
+                    editable
+                    class="lg:sticky lg:top-6 lg:self-start"
+                    @edit="editItem"
+                    @remove="removeItem"
+                />
             </div>
         </section>
 
@@ -136,8 +175,9 @@ function formatPrice(price) {
             v-if="customizing"
             :group-order-id="groupOrderId"
             :dish="customizing"
-            @close="customizing = null"
-            @added="onAdded"
+            :existing-item="editingItem"
+            @close="closeModal"
+            @saved="onSaved"
         />
     </DemoLayout>
 </template>

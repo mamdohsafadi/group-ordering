@@ -6,14 +6,16 @@ const props = defineProps({
     groupOrderId: { type: Number, required: true },
     // { id, name, eng_name, price, option_groups: [{ id, name, options: [{id, name, price}] }] }
     dish: { type: Object, required: true },
+    // US-005: pass an existing cart line to edit it instead of adding.
+    existingItem: { type: Object, default: null },
 });
 
-const emit = defineEmits(['close', 'added']);
+const emit = defineEmits(['close', 'saved']);
 
 const api = useApi();
-const quantity = ref(1);
-const selected = ref(new Set());
-const instructions = ref('');
+const quantity = ref(props.existingItem?.quantity ?? 1);
+const selected = ref(new Set((props.existingItem?.modifiers ?? []).map((m) => m.id)));
+const instructions = ref(props.existingItem?.special_instructions ?? '');
 const submitting = ref(false);
 const error = ref(null);
 
@@ -38,19 +40,29 @@ function toggle(optionId) {
     selected.value = next;
 }
 
-async function add() {
+async function save() {
     submitting.value = true;
     error.value = null;
 
     try {
-        await api.addCartItem(props.groupOrderId, {
-            menu_item_id: props.dish.id,
-            quantity: quantity.value,
-            modifiers: [...selected.value],
-            special_instructions: instructions.value.trim() || null,
-        });
+        if (props.existingItem) {
+            // US-005 AC1: version travels with the edit (NFR-008).
+            await api.updateCartItem(props.groupOrderId, props.existingItem.id, {
+                quantity: quantity.value,
+                version: props.existingItem.version,
+                modifiers: [...selected.value],
+                special_instructions: instructions.value.trim() || null,
+            });
+        } else {
+            await api.addCartItem(props.groupOrderId, {
+                menu_item_id: props.dish.id,
+                quantity: quantity.value,
+                modifiers: [...selected.value],
+                special_instructions: instructions.value.trim() || null,
+            });
+        }
 
-        emit('added');
+        emit('saved');
     } catch (e) {
         error.value = e.message;
         submitting.value = false;
@@ -146,9 +158,9 @@ async function add() {
                     type="button"
                     :disabled="submitting"
                     class="flex-1 rounded-xl bg-amber-500 px-4 py-3 font-medium text-white shadow-lg shadow-amber-500/25 transition hover:bg-amber-600 disabled:opacity-50"
-                    @click="add"
+                    @click="save"
                 >
-                    {{ submitting ? 'Adding…' : 'Add to my cart' }}
+                    {{ submitting ? 'Saving…' : existingItem ? 'Save changes' : 'Add to my cart' }}
                 </button>
             </div>
         </div>
