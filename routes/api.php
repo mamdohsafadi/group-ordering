@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\CartItemController;
 use App\Http\Controllers\Api\V1\GroupOrderController;
+use App\Http\Controllers\Api\V1\InvoiceController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -40,11 +41,13 @@ Route::prefix('v1')->group(function () {
             ->whereNumber('groupOrder')->whereNumber('item');
         Route::delete('/group-orders/{groupOrder}/cart/items/{item}', [CartItemController::class, 'destroy'])
             ->whereNumber('groupOrder')->whereNumber('item');
+        Route::get('/group-orders/{groupOrder}/invoice', [InvoiceController::class, 'show'])
+            ->whereNumber('groupOrder');
+        Route::get('/group-orders/{groupOrder}/invoice/master', [InvoiceController::class, 'master'])
+            ->whereNumber('groupOrder');
     });
 
     // Still to come, story by story:
-    // GET    /group-orders/{groupOrder}/invoice
-    // GET    /group-orders/{groupOrder}/invoice/master
     // POST   /group-orders/{groupOrder}/checkout
     // POST   /group-orders/{groupOrder}/leave
 });
