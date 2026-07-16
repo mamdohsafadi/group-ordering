@@ -66,5 +66,9 @@ export function useApi() {
         },
 
         cancelGroupOrder: (id) => request(token(), `/group-orders/${id}/cancel`, { method: 'POST' }),
+
+        // US-004 (spec §8.3): payload is { menu_item_id, quantity, modifiers?, special_instructions? }.
+        addCartItem: (groupOrderId, payload) =>
+            request(token(), `/group-orders/${groupOrderId}/cart/items`, { method: 'POST', body: payload }),
     };
 }
