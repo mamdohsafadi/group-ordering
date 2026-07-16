@@ -5,6 +5,7 @@ import DemoLayout from '../../Layouts/DemoLayout.vue';
 import CountdownTimer from '../../Components/CountdownTimer.vue';
 import CopyLinkField from '../../Components/CopyLinkField.vue';
 import ParticipantList from '../../Components/ParticipantList.vue';
+import SubCartPanel from '../../Components/SubCartPanel.vue';
 import { useApi } from '../../api';
 
 const props = defineProps({
@@ -93,11 +94,11 @@ async function cancelGroup() {
         <section v-else-if="groupOrder" class="mx-auto max-w-2xl px-6 pt-10 pb-24">
             <div class="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                    <!-- US-002 AC3: participants can reach the restaurant menu from the lobby. -->
+                    <!-- US-002 AC3 / US-004 AC1: the group menu is one tap away. -->
                     <p class="text-sm font-medium text-amber-600">
                         Group order ·
                         <Link
-                            :href="`/restaurants/${groupOrder.restaurant_id}`"
+                            :href="`/group-orders/${groupOrder.id}/menu`"
                             class="underline decoration-amber-300 underline-offset-2 transition hover:text-amber-700"
                         >
                             {{ groupOrder.restaurant_name }}
@@ -107,10 +108,10 @@ async function cancelGroup() {
                         {{ isLeader ? 'Your group lobby' : `${groupOrder.leader_name}'s group` }}
                     </h1>
                     <Link
-                        :href="`/restaurants/${groupOrder.restaurant_id}`"
+                        :href="`/group-orders/${groupOrder.id}/menu`"
                         class="mt-2 inline-flex items-center gap-1 text-sm font-medium text-stone-500 transition hover:text-amber-600"
                     >
-                        View the menu
+                        Browse the menu & add items
                         <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                         </svg>
@@ -171,6 +172,9 @@ async function cancelGroup() {
                         Waiting for people to join…
                     </p>
                 </div>
+
+                <!-- US-004 AC4: the participant's own sub-cart with its running subtotal. -->
+                <SubCartPanel :cart="groupOrder.my_cart" class="mt-6" />
 
                 <div v-if="isLeader" class="mt-6 flex justify-end">
                     <button
