@@ -24,6 +24,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/group-orders/{groupOrder}/menu', [GroupOrderMenuController::class, 'show'])
         ->whereNumber('groupOrder')->name('group-orders.menu');
 
+    Route::get('/group-orders/{groupOrder}/checkout', fn (int $groupOrder) => Inertia::render('GroupOrders/Checkout', [
+        'groupOrderId' => $groupOrder,
+    ]))->whereNumber('groupOrder')->name('group-orders.checkout');
+
     Route::get('/group-orders/{groupOrder}/lobby', fn (int $groupOrder) => Inertia::render('GroupOrders/Lobby', [
         'groupOrderId' => $groupOrder,
     ]))->whereNumber('groupOrder')->name('group-orders.lobby');
