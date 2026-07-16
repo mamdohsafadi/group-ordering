@@ -281,6 +281,6 @@ class GroupOrderService
     /** @return array<string> */
     private function lobbyRelations(): array
     {
-        return ['leader', 'restaurant', 'participants.user'];
+        return ['leader', 'restaurant', 'participants.user', 'participants.cartItems.dish'];
     }
 }

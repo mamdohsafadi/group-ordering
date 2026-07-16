@@ -51,6 +51,44 @@ class GroupOrderResource extends JsonResource
                     'status' => $participant->status,
                     'joined_at' => $participant->joined_at?->toISOString(),
                 ]),
+            'my_cart' => $this->myCart($request),
+        ];
+    }
+
+    /**
+     * The requesting participant's own sub-cart (US-004 AC4). Only the
+     * caller's items are exposed — participants never see each other's
+     * carts (spec §2); null for non-members previewing via the link.
+     *
+     * @return array{items: mixed, subtotal: float}|null
+     */
+    private function myCart(Request $request): ?array
+    {
+        $me = $this->participants->first(
+            fn (GroupParticipant $participant) => $participant->user_id === $request->user()?->id
+                && $participant->status === GroupParticipant::STATUS_JOINED,
+        );
+
+        if ($me === null) {
+            return null;
+        }
+
+        return [
+            'items' => $me->cartItems
+                ->sortBy('id')
+                ->values()
+                ->map(fn ($item) => [
+                    'id' => $item->id,
+                    'dish_id' => $item->dish_id,
+                    'dish_name' => $item->dish->eng_name,
+                    'quantity' => $item->quantity,
+                    'modifiers' => $item->modifiers,
+                    'special_instructions' => $item->special_instructions,
+                    'unit_price' => $item->unit_price,
+                    'total_price' => $item->total_price,
+                    'version' => $item->version,
+                ]),
+            'subtotal' => round((float) $me->cartItems->sum('total_price'), 2),
         ];
     }
 }
