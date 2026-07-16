@@ -74,6 +74,104 @@ class CartService
     }
 
     /**
+     * US-005 AC1/AC2: change quantity or modifiers on a cart line. Quantity 0
+     * removes the item. Optimistic locking (NFR-008): the caller sends the
+     * version it last saw; a mismatch means someone else changed the line.
+     *
+     * @return array{item: GroupCartItem|null, subtotal: float}
+     */
+    public function updateItem(int $groupOrderId, int $itemId, User $user, array $data): array
+    {
+        return DB::transaction(function () use ($groupOrderId, $itemId, $user, $data) {
+            [$groupOrder, $participant, $item] = $this->findEditableItem($groupOrderId, $itemId, $user);
+
+            if ($item->version !== (int) $data['version']) {
+                abort(409, 'This item was changed from another device. Refresh and try again.');
+            }
+
+            $quantity = (int) $data['quantity'];
+
+            // US-005 AC2: quantity zero removes the line entirely.
+            if ($quantity === 0) {
+                $item->delete();
+
+                return ['item' => null, 'subtotal' => $this->subtotalFor($participant)];
+            }
+
+            // Modifiers omitted = keep the current selection; sent = replace it.
+            $modifiers = array_key_exists('modifiers', $data)
+                ? $this->resolveModifiers($item->dish, $data['modifiers'] ?? [])
+                : ($item->modifiers ?? []);
+
+            $unitPrice = round($item->dish->price + array_sum(array_column($modifiers, 'price')), 2);
+
+            $item->update([
+                'quantity' => $quantity,
+                'modifiers' => $modifiers === [] ? null : $modifiers,
+                'special_instructions' => array_key_exists('special_instructions', $data)
+                    ? $data['special_instructions']
+                    : $item->special_instructions,
+                'unit_price' => $unitPrice,
+                'total_price' => round($unitPrice * $quantity, 2),
+                'version' => $item->version + 1,
+            ]);
+
+            return ['item' => $item, 'subtotal' => $this->subtotalFor($participant)];
+        });
+    }
+
+    /**
+     * US-005 AC3: remove a line from the sub-cart.
+     *
+     * @return array{subtotal: float}
+     */
+    public function removeItem(int $groupOrderId, int $itemId, User $user): array
+    {
+        return DB::transaction(function () use ($groupOrderId, $itemId, $user) {
+            [, $participant, $item] = $this->findEditableItem($groupOrderId, $itemId, $user);
+
+            $item->delete();
+
+            return ['subtotal' => $this->subtotalFor($participant)];
+        });
+    }
+
+    /**
+     * Shared guards for edit/remove: the group is editable and the line
+     * belongs to the caller — or the caller is the leader, who may edit any
+     * sub-cart (spec §2). Returns the item's owning participant so subtotals
+     * reflect the owner, not the editor.
+     *
+     * @return array{0: GroupOrder, 1: GroupParticipant, 2: GroupCartItem}
+     */
+    private function findEditableItem(int $groupOrderId, int $itemId, User $user): array
+    {
+        $groupOrder = GroupOrder::query()->whereKey($groupOrderId)->lockForUpdate()->first();
+
+        if ($groupOrder === null) {
+            abort(404, 'Group order not found.');
+        }
+
+        $item = $groupOrder->cartItems()->with('dish')->find($itemId);
+
+        if ($item === null) {
+            abort(404, 'Cart item not found.');
+        }
+
+        $owner = $item->participant;
+        $isOwn = $owner->user_id === $user->id
+            && $owner->status === GroupParticipant::STATUS_JOINED;
+
+        if (! $isOwn && $groupOrder->leader_id !== $user->id) {
+            abort(403, 'You can only change items in your own sub-cart.');
+        }
+
+        $this->assertEditable($groupOrder);
+
+        return [$groupOrder, $owner, $item];
+    }
+
+    /**
      * FR-016 / US-005 AC4: no cart changes once the leader has submitted —
      * and none on cancelled/expired sessions either.
      */

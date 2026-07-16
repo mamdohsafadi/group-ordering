@@ -36,11 +36,13 @@ Route::prefix('v1')->group(function () {
             ->whereNumber('groupOrder');
         Route::post('/group-orders/{groupOrder}/cart/items', [CartItemController::class, 'store'])
             ->whereNumber('groupOrder');
+        Route::put('/group-orders/{groupOrder}/cart/items/{item}', [CartItemController::class, 'update'])
+            ->whereNumber('groupOrder')->whereNumber('item');
+        Route::delete('/group-orders/{groupOrder}/cart/items/{item}', [CartItemController::class, 'destroy'])
+            ->whereNumber('groupOrder')->whereNumber('item');
     });
 
     // Still to come, story by story:
-    // PUT    /group-orders/{groupOrder}/cart/items/{item}
-    // DELETE /group-orders/{groupOrder}/cart/items/{item}
     // GET    /group-orders/{groupOrder}/invoice
     // GET    /group-orders/{groupOrder}/invoice/master
     // POST   /group-orders/{groupOrder}/checkout
