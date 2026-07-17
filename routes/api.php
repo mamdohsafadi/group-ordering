@@ -48,8 +48,7 @@ Route::prefix('v1')->group(function () {
             ->whereNumber('groupOrder');
         Route::post('/group-orders/{groupOrder}/checkout', [CheckoutController::class, 'store'])
             ->whereNumber('groupOrder');
+        Route::post('/group-orders/{groupOrder}/leave', [GroupOrderController::class, 'leave'])
+            ->whereNumber('groupOrder');
     });
-
-    // Still to come, story by story:
-    // POST   /group-orders/{groupOrder}/leave
 });
