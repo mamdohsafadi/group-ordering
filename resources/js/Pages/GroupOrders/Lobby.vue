@@ -6,6 +6,7 @@ import CountdownTimer from '../../Components/CountdownTimer.vue';
 import CopyLinkField from '../../Components/CopyLinkField.vue';
 import ParticipantList from '../../Components/ParticipantList.vue';
 import SubCartPanel from '../../Components/SubCartPanel.vue';
+import InvoiceBreakdown from '../../Components/InvoiceBreakdown.vue';
 import { useApi } from '../../api';
 
 const props = defineProps({
@@ -18,6 +19,7 @@ const page = usePage();
 const groupOrder = ref(null);
 const error = ref(null);
 const cancelling = ref(false);
+const myInvoice = ref(null); // US-006 AC1: own breakdown once submitted
 
 const isLeader = computed(() => groupOrder.value?.leader_id === page.props.auth.user?.id);
 const joinedCount = computed(
@@ -41,6 +43,10 @@ async function refresh() {
         // Terminal states never change again — stop asking.
         if (groupOrder.value.status !== 'ACTIVE') {
             clearInterval(pollTimer);
+        }
+
+        if (groupOrder.value.status === 'SUBMITTED' && !myInvoice.value) {
+            myInvoice.value = await api.getInvoice(props.groupOrderId).catch(() => null);
         }
     } catch (e) {
         // A dropped poll (server restart, wifi blip) must not kill an
@@ -121,9 +127,29 @@ async function cancelGroup() {
                 <CountdownTimer v-if="isActive" :expires-at="groupOrder.expires_at" @expired="refresh" />
             </div>
 
+            <!-- US-007 AC5 + US-006 AC1: submitted — everyone sees their own invoice. -->
+            <div
+                v-if="groupOrder.status === 'SUBMITTED'"
+                class="mt-8 rounded-2xl border border-green-200 bg-green-50/50 p-6"
+            >
+                <h2 class="text-lg font-semibold text-green-700">Order placed 🎉</h2>
+                <p class="mt-1 text-sm text-stone-500">
+                    The order went to the restaurant as one unified order — here's your share.
+                </p>
+                <div v-if="myInvoice" class="mt-4 rounded-xl bg-white p-4">
+                    <ul class="mb-3 flex flex-col gap-1 text-sm text-stone-600">
+                        <li v-for="item in myInvoice.items" :key="item.id" class="flex justify-between">
+                            <span>{{ item.quantity }}× {{ item.dish_name }}</span>
+                            <span>{{ Number(item.total_price).toFixed(2) }}</span>
+                        </li>
+                    </ul>
+                    <InvoiceBreakdown :invoice="myInvoice" />
+                </div>
+            </div>
+
             <!-- Terminal states -->
             <div
-                v-if="groupOrder.status === 'EXPIRED'"
+                v-else-if="groupOrder.status === 'EXPIRED'"
                 class="mt-8 rounded-2xl border border-stone-200 bg-stone-50 p-6 text-center"
             >
                 <h2 class="text-lg font-semibold text-stone-700">This group order has expired</h2>
@@ -176,7 +202,7 @@ async function cancelGroup() {
                 <!-- US-004 AC4: the participant's own sub-cart with its running subtotal. -->
                 <SubCartPanel :cart="groupOrder.my_cart" class="mt-6" />
 
-                <div v-if="isLeader" class="mt-6 flex justify-end">
+                <div v-if="isLeader" class="mt-6 flex items-center justify-between gap-3">
                     <button
                         type="button"
                         :disabled="cancelling"
@@ -185,6 +211,13 @@ async function cancelGroup() {
                     >
                         Cancel group order
                     </button>
+                    <!-- US-007 AC1: leader reviews all sub-carts before placing. -->
+                    <Link
+                        :href="`/group-orders/${groupOrder.id}/checkout`"
+                        class="rounded-xl bg-amber-500 px-5 py-2.5 font-medium text-white shadow-lg shadow-amber-500/25 transition hover:bg-amber-600"
+                    >
+                        Review & Checkout
+                    </Link>
                 </div>
             </template>
         </section>

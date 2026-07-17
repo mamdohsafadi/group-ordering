@@ -78,5 +78,13 @@ export function useApi() {
         // US-005 (spec §8.5).
         removeCartItem: (groupOrderId, itemId) =>
             request(token(), `/group-orders/${groupOrderId}/cart/items/${itemId}`, { method: 'DELETE' }),
+
+        // US-006 (spec §8.6/§8.7).
+        getInvoice: (groupOrderId) => request(token(), `/group-orders/${groupOrderId}/invoice`),
+        getMasterInvoice: (groupOrderId) => request(token(), `/group-orders/${groupOrderId}/invoice/master`),
+
+        // US-007 (spec §8.8) — payment stays COD, so no payment_method_id yet.
+        checkout: (groupOrderId, payload = {}) =>
+            request(token(), `/group-orders/${groupOrderId}/checkout`, { method: 'POST', body: payload }),
     };
 }
