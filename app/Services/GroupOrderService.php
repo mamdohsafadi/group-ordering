@@ -153,6 +153,62 @@ class GroupOrderService
         });
     }
 
+    /**
+     * US-008: a participant leaves before submission. Their sub-cart is
+     * removed entirely (FR-011) and the rest of the group is told (FR-012).
+     * The LEFT row stays so rejoining can be blocked (BR-007).
+     */
+    public function leave(int $id, User $user): void
+    {
+        DB::transaction(function () use ($id, $user) {
+            $groupOrder = GroupOrder::query()->whereKey($id)->lockForUpdate()->first();
+
+            if ($groupOrder === null) {
+                abort(404, 'Group order not found.');
+            }
+
+            // BR-008 flip side: the leader owns the session — cancel, not leave.
+            if ($groupOrder->leader_id === $user->id) {
+                abort(403, 'The group leader cannot leave the group order.');
+            }
+
+            $participant = $groupOrder->participants()
+                ->where('user_id', $user->id)
+                ->where('status', GroupParticipant::STATUS_JOINED)
+                ->first();
+
+            if ($participant === null) {
+                abort(403, 'You are not part of this group order.');
+            }
+
+            // US-008 AC4: leaving is disabled once submitted.
+            if ($groupOrder->status === GroupOrder::STATUS_SUBMITTED) {
+                abort(409, 'Order has been submitted and cannot be modified.');
+            }
+
+            if ($groupOrder->status !== GroupOrder::STATUS_ACTIVE) {
+                abort(409, 'This group order is no longer active.');
+            }
+
+            $participant->cartItems()->delete();
+            $participant->update([
+                'status' => GroupParticipant::STATUS_LEFT,
+                'left_at' => now(),
+            ]);
+
+            $others = $groupOrder->participants()
+                ->where('status', GroupParticipant::STATUS_JOINED)
+                ->pluck('user_id')
+                ->all();
+
+            DB::afterCommit(fn () => $this->notifier->notify($others, 'participant.left', [
+                'group_order_id' => $groupOrder->id,
+                'user_id' => $user->id,
+                'name' => $user->name,
+            ]));
+        });
+    }
+
     /** BR-012: the leader cancels before submission; everyone is told. */
     public function cancel(int $id, User $user): GroupOrder
     {

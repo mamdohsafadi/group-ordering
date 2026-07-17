@@ -67,6 +67,21 @@ onMounted(async () => {
 
 onBeforeUnmount(() => clearInterval(pollTimer));
 
+// US-008 AC1: confirmation before leaving; the sub-cart goes with you (AC2).
+async function leaveGroup() {
+    if (!window.confirm('Leave this group order? Your items will be removed.')) {
+        return;
+    }
+
+    try {
+        await api.leaveGroupOrder(props.groupOrderId);
+        router.visit('/');
+    } catch (e) {
+        window.alert(e.message);
+        await refresh();
+    }
+}
+
 async function cancelGroup() {
     if (!window.confirm('Cancel this group order for everyone?')) {
         return;
@@ -201,6 +216,17 @@ async function cancelGroup() {
 
                 <!-- US-004 AC4: the participant's own sub-cart with its running subtotal. -->
                 <SubCartPanel :cart="groupOrder.my_cart" class="mt-6" />
+
+                <!-- US-008: participants can leave before submission; hidden for the leader (BR-008). -->
+                <div v-if="!isLeader" class="mt-6 flex justify-end">
+                    <button
+                        type="button"
+                        class="rounded-xl border border-stone-200 px-4 py-2 text-sm font-medium text-stone-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                        @click="leaveGroup"
+                    >
+                        Leave group
+                    </button>
+                </div>
 
                 <div v-if="isLeader" class="mt-6 flex items-center justify-between gap-3">
                     <button

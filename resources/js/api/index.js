@@ -79,6 +79,10 @@ export function useApi() {
         removeCartItem: (groupOrderId, itemId) =>
             request(token(), `/group-orders/${groupOrderId}/cart/items/${itemId}`, { method: 'DELETE' }),
 
+        // US-008 (spec §8.9).
+        leaveGroupOrder: (groupOrderId) =>
+            request(token(), `/group-orders/${groupOrderId}/leave`, { method: 'POST' }),
+
         // US-006 (spec §8.6/§8.7).
         getInvoice: (groupOrderId) => request(token(), `/group-orders/${groupOrderId}/invoice`),
         getMasterInvoice: (groupOrderId) => request(token(), `/group-orders/${groupOrderId}/invoice/master`),

@@ -67,6 +67,17 @@ class GroupOrderController extends Controller
         ], $result['created'] ? 201 : 200);
     }
 
+    /** POST /api/v1/group-orders/{id}/leave — participant leaves before submission (US-008). */
+    public function leave(Request $request, int $groupOrder): JsonResponse
+    {
+        $this->groupOrders->leave($groupOrder, $request->user());
+
+        return response()->json([
+            'success' => true,
+            'message' => 'You have left the group order',
+        ]);
+    }
+
     /** POST /api/v1/group-orders/{id}/cancel — leader cancels (BR-012). */
     public function cancel(Request $request, int $groupOrder): JsonResponse
     {
