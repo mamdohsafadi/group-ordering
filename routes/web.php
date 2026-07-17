@@ -3,6 +3,8 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GroupOrderMenuController;
 use App\Http\Controllers\RestaurantController;
+use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -28,8 +30,15 @@ Route::middleware('auth')->group(function () {
         'groupOrderId' => $groupOrder,
     ]))->whereNumber('groupOrder')->name('group-orders.checkout');
 
-    Route::get('/group-orders/{groupOrder}/lobby', fn (int $groupOrder) => Inertia::render('GroupOrders/Lobby', [
+    Route::get('/group-orders/{groupOrder}/lobby', fn (Request $request, int $groupOrder) => Inertia::render('GroupOrders/Lobby', [
         'groupOrderId' => $groupOrder,
+        // US-003 AC1: the leader's contact list — demo stand-in is every
+        // other registered user.
+        'contacts' => User::query()
+            ->whereKeyNot($request->user()->id)
+            ->orderBy('id')
+            ->limit(12)
+            ->get(['id', 'name', 'email']),
     ]))->whereNumber('groupOrder')->name('group-orders.lobby');
 
     // US-002 AC2: guests hitting a join link are sent to login and returned

@@ -1,6 +1,7 @@
 <script setup>
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import NotificationBell from '../Components/NotificationBell.vue';
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user);
@@ -19,6 +20,7 @@ function logout() {
             </Link>
             <nav class="flex items-center gap-4 text-sm font-medium text-stone-500">
                 <slot name="nav" />
+                <NotificationBell />
                 <template v-if="user">
                     <span class="hidden items-center gap-2 sm:flex">
                         <span
