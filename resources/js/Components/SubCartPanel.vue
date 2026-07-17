@@ -2,7 +2,11 @@
 defineProps({
     // { items: [...], subtotal } from the lobby payload's my_cart.
     cart: { type: Object, default: null },
+    // US-005: show edit/remove actions on each line.
+    editable: { type: Boolean, default: false },
 });
+
+defineEmits(['edit', 'remove']);
 
 function formatPrice(price) {
     return Number(price).toFixed(2);
@@ -39,7 +43,23 @@ function formatPrice(price) {
                     <p v-if="item.special_instructions" class="mt-0.5 truncate text-xs text-stone-400 italic">
                         “{{ item.special_instructions }}”
                     </p>
-                    <slot name="item-actions" :item="item" />
+                    <!-- US-005 AC1/AC3: edit or remove before submission. -->
+                    <div v-if="editable" class="mt-1.5 flex gap-3 text-xs font-medium">
+                        <button
+                            type="button"
+                            class="text-amber-600 transition hover:text-amber-700"
+                            @click="$emit('edit', item)"
+                        >
+                            Edit
+                        </button>
+                        <button
+                            type="button"
+                            class="text-stone-400 transition hover:text-red-600"
+                            @click="$emit('remove', item)"
+                        >
+                            Remove
+                        </button>
+                    </div>
                 </div>
                 <span class="shrink-0 text-sm font-semibold text-stone-700">
                     {{ formatPrice(item.total_price) }}
