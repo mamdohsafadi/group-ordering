@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\CartItemController;
+use App\Http\Controllers\Api\V1\CheckoutController;
 use App\Http\Controllers\Api\V1\GroupOrderController;
 use App\Http\Controllers\Api\V1\InvoiceController;
 use Illuminate\Support\Facades\Route;
@@ -45,9 +46,10 @@ Route::prefix('v1')->group(function () {
             ->whereNumber('groupOrder');
         Route::get('/group-orders/{groupOrder}/invoice/master', [InvoiceController::class, 'master'])
             ->whereNumber('groupOrder');
+        Route::post('/group-orders/{groupOrder}/checkout', [CheckoutController::class, 'store'])
+            ->whereNumber('groupOrder');
     });
 
     // Still to come, story by story:
-    // POST   /group-orders/{groupOrder}/checkout
     // POST   /group-orders/{groupOrder}/leave
 });
