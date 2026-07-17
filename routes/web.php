@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\GroupOrderMenuController;
 use App\Http\Controllers\RestaurantController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -19,6 +20,9 @@ Route::middleware('auth')->group(function () {
     // group-order state from /api/v1.
     Route::get('/restaurants/{restaurant}', [RestaurantController::class, 'show'])
         ->whereNumber('restaurant')->name('restaurants.show');
+
+    Route::get('/group-orders/{groupOrder}/menu', [GroupOrderMenuController::class, 'show'])
+        ->whereNumber('groupOrder')->name('group-orders.menu');
 
     Route::get('/group-orders/{groupOrder}/lobby', fn (int $groupOrder) => Inertia::render('GroupOrders/Lobby', [
         'groupOrderId' => $groupOrder,
