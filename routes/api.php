@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\CartItemController;
 use App\Http\Controllers\Api\V1\CheckoutController;
 use App\Http\Controllers\Api\V1\GroupOrderController;
 use App\Http\Controllers\Api\V1\InvoiceController;
+use App\Http\Controllers\Api\V1\NotificationController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -50,5 +51,11 @@ Route::prefix('v1')->group(function () {
             ->whereNumber('groupOrder');
         Route::post('/group-orders/{groupOrder}/leave', [GroupOrderController::class, 'leave'])
             ->whereNumber('groupOrder');
+        Route::post('/group-orders/{groupOrder}/invite', [GroupOrderController::class, 'invite'])
+            ->whereNumber('groupOrder');
+
+        // Demo notification inbox (US-003) — see NotificationController.
+        Route::get('/notifications', [NotificationController::class, 'index']);
+        Route::post('/notifications/read', [NotificationController::class, 'markRead']);
     });
 });

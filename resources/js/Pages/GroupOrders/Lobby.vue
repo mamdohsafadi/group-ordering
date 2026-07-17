@@ -7,11 +7,15 @@ import CopyLinkField from '../../Components/CopyLinkField.vue';
 import ParticipantList from '../../Components/ParticipantList.vue';
 import SubCartPanel from '../../Components/SubCartPanel.vue';
 import InvoiceBreakdown from '../../Components/InvoiceBreakdown.vue';
+import InviteContactsModal from '../../Components/InviteContactsModal.vue';
 import { useApi } from '../../api';
 
 const props = defineProps({
     groupOrderId: { type: Number, required: true },
+    contacts: { type: Array, default: () => [] },
 });
+
+const inviting = ref(false);
 
 const api = useApi();
 const page = usePage();
@@ -190,10 +194,22 @@ async function cancelGroup() {
             <template v-else>
                 <!-- US-001 AC2/AC3: shareable link with copy and share options (leader only). -->
                 <div v-if="isLeader" class="mt-8 rounded-2xl border border-stone-100 bg-white p-6 shadow-sm">
-                    <h2 class="font-semibold text-stone-900">Invite people</h2>
-                    <p class="mt-1 mb-4 text-sm text-stone-500">
-                        Anyone with this link can join while the timer is running.
-                    </p>
+                    <div class="mb-4 flex items-center justify-between gap-3">
+                        <div>
+                            <h2 class="font-semibold text-stone-900">Invite people</h2>
+                            <p class="mt-1 text-sm text-stone-500">
+                                Anyone with this link can join while the timer is running.
+                            </p>
+                        </div>
+                        <!-- US-003 AC1: in-app invitations from the contact list. -->
+                        <button
+                            type="button"
+                            class="shrink-0 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700 transition hover:bg-amber-100"
+                            @click="inviting = true"
+                        >
+                            Invite from contacts
+                        </button>
+                    </div>
                     <CopyLinkField :url="joinUrl" />
                 </div>
 
@@ -247,5 +263,12 @@ async function cancelGroup() {
                 </div>
             </template>
         </section>
+
+        <InviteContactsModal
+            v-if="inviting"
+            :group-order-id="groupOrderId"
+            :contacts="contacts"
+            @close="inviting = false"
+        />
     </DemoLayout>
 </template>

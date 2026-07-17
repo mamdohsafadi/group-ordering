@@ -79,6 +79,17 @@ export function useApi() {
         removeCartItem: (groupOrderId, itemId) =>
             request(token(), `/group-orders/${groupOrderId}/cart/items/${itemId}`, { method: 'DELETE' }),
 
+        // US-003: leader invites registered users in-app.
+        inviteToGroupOrder: (groupOrderId, userIds) =>
+            request(token(), `/group-orders/${groupOrderId}/invite`, {
+                method: 'POST',
+                body: { user_ids: userIds },
+            }),
+
+        // Demo notification inbox (US-003).
+        getNotifications: () => request(token(), '/notifications'),
+        markNotificationsRead: () => request(token(), '/notifications/read', { method: 'POST' }),
+
         // US-008 (spec §8.9).
         leaveGroupOrder: (groupOrderId) =>
             request(token(), `/group-orders/${groupOrderId}/leave`, { method: 'POST' }),

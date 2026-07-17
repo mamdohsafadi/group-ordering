@@ -154,6 +154,51 @@ class GroupOrderService
     }
 
     /**
+     * US-003: the leader invites registered users by in-app notification.
+     * Each invitee gets a deep link (the shareable token) to the join screen.
+     * Returns how many invitations went out.
+     *
+     * @param  list<int>  $userIds
+     */
+    public function invite(int $id, array $userIds, User $user): int
+    {
+        $groupOrder = GroupOrder::query()->with(['leader', 'restaurant', 'participants'])->find($id);
+
+        if ($groupOrder === null) {
+            abort(404, 'Group order not found.');
+        }
+
+        if ($groupOrder->leader_id !== $user->id) {
+            abort(403, 'Only the group leader can send invitations.');
+        }
+
+        $this->applyLazyExpiry($groupOrder);
+
+        if (! $this->joinWindowOpen($groupOrder)) {
+            abort(410, 'This group order has expired or been submitted.');
+        }
+
+        // BR-002: invitees must be registered users; skip anyone already in.
+        $already = $groupOrder->participants->pluck('user_id')->all();
+        $invitees = User::query()
+            ->whereIn('id', array_unique(array_map(intval(...), $userIds)))
+            ->whereNotIn('id', [...$already, $user->id])
+            ->pluck('id')
+            ->all();
+
+        if ($invitees !== []) {
+            $this->notifier->notify($invitees, 'group.invited', [
+                'group_order_id' => $groupOrder->id,
+                'token' => $groupOrder->shareable_link,
+                'leader_name' => $groupOrder->leader->name,
+                'restaurant_name' => $groupOrder->restaurant->name,
+            ]);
+        }
+
+        return count($invitees);
+    }
+
+    /**
      * US-008: a participant leaves before submission. Their sub-cart is
      * removed entirely (FR-011) and the rest of the group is told (FR-012).
      * The LEFT row stays so rejoining can be blocked (BR-007).
