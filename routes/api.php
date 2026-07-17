@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\CartItemController;
 use App\Http\Controllers\Api\V1\GroupOrderController;
 use Illuminate\Support\Facades\Route;
 
@@ -33,10 +34,11 @@ Route::prefix('v1')->group(function () {
             ->whereNumber('groupOrder');
         Route::post('/group-orders/{groupOrder}/cancel', [GroupOrderController::class, 'cancel'])
             ->whereNumber('groupOrder');
+        Route::post('/group-orders/{groupOrder}/cart/items', [CartItemController::class, 'store'])
+            ->whereNumber('groupOrder');
     });
 
     // Still to come, story by story:
-    // POST   /group-orders/{groupOrder}/cart/items
     // PUT    /group-orders/{groupOrder}/cart/items/{item}
     // DELETE /group-orders/{groupOrder}/cart/items/{item}
     // GET    /group-orders/{groupOrder}/invoice
