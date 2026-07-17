@@ -2,9 +2,9 @@
 
 namespace App\Providers;
 
+use App\Adapters\DatabaseNotificationDispatcher;
 use App\Adapters\LocalOrderSubmitter;
 use App\Adapters\LocalTokenValidator;
-use App\Adapters\LogNotificationDispatcher;
 use App\Contracts\NotificationDispatcher;
 use App\Contracts\OrderSubmitter;
 use App\Contracts\TokenValidator;
@@ -21,6 +21,6 @@ class IntegrationServiceProvider extends ServiceProvider
     {
         $this->app->singleton(OrderSubmitter::class, LocalOrderSubmitter::class);
         $this->app->singleton(TokenValidator::class, LocalTokenValidator::class);
-        $this->app->singleton(NotificationDispatcher::class, LogNotificationDispatcher::class);
+        $this->app->singleton(NotificationDispatcher::class, DatabaseNotificationDispatcher::class);
     }
 }

@@ -67,6 +67,19 @@ class GroupOrderController extends Controller
         ], $result['created'] ? 201 : 200);
     }
 
+    /** POST /api/v1/group-orders/{id}/invite — leader invites users in-app (US-003). */
+    public function invite(Request $request, int $groupOrder): JsonResponse
+    {
+        $validated = $request->validate([
+            'user_ids' => ['required', 'array', 'min:1', 'max:50'],
+            'user_ids.*' => ['integer'],
+        ]);
+
+        $invited = $this->groupOrders->invite($groupOrder, $validated['user_ids'], $request->user());
+
+        return response()->json(['success' => true, 'invited' => $invited]);
+    }
+
     /** POST /api/v1/group-orders/{id}/leave — participant leaves before submission (US-008). */
     public function leave(Request $request, int $groupOrder): JsonResponse
     {
